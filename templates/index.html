@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#171a19">
+  <title>Stik PS2 | Remote</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f4f1e9;
+      --muted: #a2aaa3;
+      --panel: #202522;
+      --edge: #3a433e;
+      --lime: #c9ef62;
+      --pink: #fb7193;
+      --blue: #73c4ee;
+      --amber: #f2c66d;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      background: radial-gradient(ellipse at 50% 0%, #303832 0%, #1c211e 42%, #151817 100%);
+      color: var(--ink);
+      font-family: ui-rounded, "Trebuchet MS", sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: none;
+      overscroll-behavior: none;
+    }
+    button { color: inherit; font: inherit; border: 0; cursor: pointer; touch-action: none; }
+    .app { height: 100%; min-height: 320px; display: flex; flex-direction: column; padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+    .topbar { height: 38px; flex: 0 0 38px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ffffff17; }
+    .brand { font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+    .brand span { color: var(--lime); }
+    .status { display: flex; align-items: center; gap: 7px; min-width: 0; color: var(--muted); font: 11px/1.2 ui-monospace, monospace; }
+    .led { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #e0a24f; box-shadow: 0 0 10px #e0a24f77; }
+    .status.connected .led { background: var(--lime); box-shadow: 0 0 10px #c9ef6280; }
+    .status.error .led { background: var(--pink); box-shadow: 0 0 10px #fb719380; }
+    .board { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(145px, 1fr) minmax(108px, .78fr) minmax(145px, 1fr); align-items: center; gap: clamp(8px, 3vw, 36px); padding: 12px clamp(2px, 3vw, 28px); }
+    .side { height: 100%; min-height: 0; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+    .shoulders { width: 100%; display: flex; justify-content: space-around; gap: 8px; }
+    .shoulder { width: min(40%, 100px); height: 38px; border: 1px solid var(--edge); border-radius: 7px; background: linear-gradient(180deg,#343b36,#242a26); color: #cbd2cb; font-size: 12px; font-weight: 800; box-shadow: 0 4px 0 #111411; }
+    .shoulder[data-button="l2"], .shoulder[data-button="r2"] { height: 32px; color: var(--muted); font-size: 10px; }
+    .shoulder.active { transform: translateY(3px); box-shadow: 0 1px 0 #111411, 0 0 12px #c9ef6255; border-color: var(--lime); color: var(--lime); }
+    .dpad { width: min(41vw, 190px); aspect-ratio: 1; position: relative; }
+    .dpad button { position: absolute; width: 34%; height: 34%; background: #303732; color: #dce2da; border: 1px solid #47504a; box-shadow: 0 4px 0 #111411; font-size: clamp(24px, 7vw, 34px); line-height: 1; }
+    .dpad button.active { transform: translateY(3px); box-shadow: 0 1px 0 #111411, 0 0 14px #c9ef6266; background: #4b5a45; color: var(--lime); }
+    .dpad .up { top: 0; left: 33%; border-radius: 7px 7px 2px 2px; }
+    .dpad .down { bottom: 0; left: 33%; border-radius: 2px 2px 7px 7px; }
+    .dpad .left { top: 33%; left: 0; border-radius: 7px 2px 2px 7px; }
+    .dpad .right { top: 33%; right: 0; border-radius: 2px 7px 7px 2px; }
+    .dpad .center { position: absolute; left: 33%; top: 33%; width: 34%; height: 34%; background: #262c28; border: 0; box-shadow: none; pointer-events: none; }
+    .sticks { width: 100%; display: flex; justify-content: center; gap: 10px; order: 1; }
+    .stick-wrap { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+    .stick-label { color: #859089; font: 9px ui-monospace, monospace; letter-spacing: 1px; }
+    .stick-zone { width: min(26vw, 114px); aspect-ratio: 1; position: relative; border-radius: 50%; border: 1px solid #414a44; background: radial-gradient(circle at 50% 45%,#323a35,#202521 70%); box-shadow: inset 0 3px 13px #080a09a8, 0 5px 0 #111411; }
+    .stick-zone:before, .stick-zone:after { content: ""; position: absolute; background: #ffffff0b; }
+    .stick-zone:before { width: 1px; top: 10%; bottom: 10%; left: 50%; }
+    .stick-zone:after { height: 1px; left: 10%; right: 10%; top: 50%; }
+    .stick-knob { width: 44%; height: 44%; position: absolute; left: 28%; top: 28%; border-radius: 50%; border: 1px solid #616c63; background: radial-gradient(circle at 35% 28%,#49534b,#222723 72%); box-shadow: 0 3px 7px #000a; pointer-events: none; }
+    .stick-zone.active .stick-knob { border-color: var(--lime); }
+    .center-mark { width: 2px; height: 2px; align-self: center; color: #66716a; font-size: 10px; }
+    .options { display: flex; align-items: center; justify-content: center; gap: clamp(12px, 3vw, 28px); order: 0; }
+    .option { width: 68px; height: 25px; border: 1px solid #515a53; border-radius: 20px; background: linear-gradient(180deg,#3b433d,#272d29); color: #cbd2cb; box-shadow: 0 3px 0 #111411; font-size: 9px; font-weight: 800; letter-spacing: .6px; }
+    .option.active { transform: translateY(2px); box-shadow: 0 1px 0 #111411, 0 0 12px #c9ef6255; color: var(--lime); border-color: var(--lime); }
+    .face { width: min(43vw, 196px); aspect-ratio: 1; position: relative; }
+    .face button { width: 32%; height: 32%; position: absolute; border-radius: 50%; border: 1px solid #ffffff30; box-shadow: 0 5px 0 #111411, inset 0 2px 4px #ffffff22; font-size: clamp(18px, 5vw, 25px); font-weight: 700; }
+    .face button.active { transform: translateY(4px); box-shadow: 0 1px 0 #111411, 0 0 14px #ffffff70, inset 0 2px 4px #ffffff22; filter: brightness(1.2); }
+    .triangle { top: 0; left: 34%; background: #558b65; color: #d9f4d5; }
+    .circle { top: 34%; right: 0; background: #a84c68; color: #ffdbe4; }
+    .cross { bottom: 0; left: 34%; background: #527eae; color: #d9edff; }
+    .square { top: 34%; left: 0; background: #a1834a; color: #fff1c8; }
+    .hint { height: 19px; flex: 0 0 19px; text-align: center; color: #758078; font: 9px ui-monospace, monospace; letter-spacing: .4px; }
+    @media (orientation: portrait) {
+      .app { padding-left: 8px; padding-right: 8px; }
+      .board { grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr) auto; gap: 4px; padding: 8px 0; }
+      .side { justify-content: space-evenly; }
+      .side:nth-child(1) { grid-column: 1; grid-row: 1; }
+      .side:nth-child(2) { grid-column: 1 / -1; grid-row: 2; height: auto; gap: 8px; justify-content: center; }
+      .side:nth-child(3) { grid-column: 2; grid-row: 1; }
+      .dpad { width: min(44vw, 196px); }
+      .face { width: min(44vw, 196px); }
+      .sticks { flex-direction: row; align-items: center; gap: clamp(18px, 6vw, 34px); }
+      .stick-zone { width: min(27vw, 116px); }
+      .shoulders { gap: 4px; }
+      .shoulder { width: 46%; height: 32px; }
+      .shoulder[data-button="l2"], .shoulder[data-button="r2"] { height: 28px; }
+      .options { gap: 9px; }
+      .option { height: 30px; font-size: 10px; }
+      .option { width: 58px; }
+      .hint { font-size: 8px; }
+    }
+    @media (max-height: 430px) and (orientation: landscape) {
+      .topbar { height: 30px; flex-basis: 30px; }
+      .board { padding-top: 4px; padding-bottom: 4px; }
+      .dpad { width: min(35vh, 170px); }
+      .face { width: min(36vh, 180px); }
+      .stick-zone { width: min(19vh, 90px); }
+      .shoulder { height: 28px; }
+      .shoulder[data-button="l2"], .shoulder[data-button="r2"] { height: 24px; }
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand"><span>PS2</span> / REMOTE</div>
+      <div id="status" class="status"><i class="led"></i><span id="status-text">Menghubungkan...</span></div>
+    </header>
+    <section class="board" aria-label="Controller">
+      <div class="side">
+        <div class="shoulders">
+          <button class="shoulder" data-button="l2">L2</button>
+          <button class="shoulder" data-button="l1">L1</button>
+        </div>
+        <div class="dpad" aria-label="D-pad">
+          <button class="up" data-button="up" aria-label="Atas">▲</button>
+          <button class="left" data-button="left" aria-label="Kiri">◀</button>
+          <span class="center"></span>
+          <button class="right" data-button="right" aria-label="Kanan">▶</button>
+          <button class="down" data-button="down" aria-label="Bawah">▼</button>
+        </div>
+      </div>
+      <div class="side">
+        <div class="sticks">
+          <div class="stick-wrap">
+            <div class="stick-zone" id="left-stick" aria-label="Analog kiri">
+              <div class="stick-knob"></div>
+            </div>
+            <span class="stick-label">LEFT STICK</span>
+          </div>
+          <span class="center-mark">●</span>
+          <div class="stick-wrap">
+            <div class="stick-zone" id="right-stick" aria-label="Analog kanan">
+              <div class="stick-knob"></div>
+            </div>
+            <span class="stick-label">RIGHT STICK</span>
+          </div>
+        </div>
+        <div class="options">
+          <button class="option" data-button="select">SELECT</button>
+          <button class="option" data-button="start">START</button>
+        </div>
+      </div>
+      <div class="side">
+        <div class="shoulders">
+          <button class="shoulder" data-button="r1">R1</button>
+          <button class="shoulder" data-button="r2">R2</button>
+        </div>
+        <div class="face" aria-label="Tombol aksi">
+          <button class="triangle" data-button="triangle" aria-label="Segitiga">△</button>
+          <button class="circle" data-button="circle" aria-label="Lingkaran">○</button>
+          <button class="cross" data-button="cross" aria-label="Silang">×</button>
+          <button class="square" data-button="square" aria-label="Kotak">□</button>
+        </div>
+      </div>
+    </section>
+    <footer class="hint">MULTI-TOUCH ENABLED&nbsp; · &nbsp;INPUT SENT LIVE</footer>
+  </main>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    (() => {
+      const socket = io({ transports: ["websocket", "polling"] });
+      const status = document.getElementById("status");
+      const statusText = document.getElementById("status-text");
+      const buttons = new Set();
+      const leftStick = { x: 0, y: 0 };
+      const rightStick = { x: 0, y: 0 };
+      const touches = new Map();
+      let analogTouch = null;
+
+      function sendInput() {
+        if (socket.connected) {
+          socket.emit("input", { buttons: [...buttons], leftStick, rightStick });
+        }
+      }
+
+      function setButton(name, down) {
+        const wasDown = buttons.has(name);
+        if (down) buttons.add(name);
+        else buttons.delete(name);
+        if (down && !wasDown && navigator.vibrate) navigator.vibrate(12);
+        document.querySelectorAll(`[data-button="${name}"]`).forEach((element) => {
+          element.classList.toggle("active", down);
+        });
+        sendInput();
+      }
+
+      function moveStick(touch, zoneId) {
+        const zone = document.getElementById(zoneId);
+        const stick = zoneId === "left-stick" ? leftStick : rightStick;
+        const rect = zone.getBoundingClientRect();
+        const radius = rect.width * 0.36;
+        const dx = touch.clientX - (rect.left + rect.width / 2);
+        const dy = touch.clientY - (rect.top + rect.height / 2);
+        const length = Math.hypot(dx, dy);
+        const scale = length > radius ? radius / length : 1;
+        stick.x = Math.max(-1, Math.min(1, (dx * scale) / radius));
+        stick.y = Math.max(-1, Math.min(1, -(dy * scale) / radius));
+        const knob = zone.querySelector(".stick-knob");
+        knob.style.transform = `translate(${stick.x * 56}%, ${-stick.y * 56}%)`;
+        zone.classList.add("active");
+        sendInput();
+      }
+
+      function releaseStick(zoneId) {
+        const stick = zoneId === "left-stick" ? leftStick : rightStick;
+        stick.x = 0;
+        stick.y = 0;
+        document.querySelector(`#${zoneId} .stick-knob`).style.transform = "translate(0, 0)";
+        document.getElementById(zoneId).classList.remove("active");
+        sendInput();
+      }
+
+      document.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        for (const touch of event.changedTouches) {
+          const target = document.elementFromPoint(touch.clientX, touch.clientY);
+          const button = target && target.closest("[data-button]");
+          const stick = target && target.closest(".stick-zone");
+          if (button) {
+            const name = button.dataset.button;
+            touches.set(touch.identifier, name);
+            setButton(name, true);
+          } else if (stick && analogTouch === null) {
+            analogTouch = { identifier: touch.identifier, zoneId: stick.id };
+            moveStick(touch, stick.id);
+          }
+        }
+      }, { passive: false });
+
+      document.addEventListener("touchmove", (event) => {
+        event.preventDefault();
+        for (const touch of event.changedTouches) {
+          if (analogTouch && touch.identifier === analogTouch.identifier) moveStick(touch, analogTouch.zoneId);
+        }
+      }, { passive: false });
+
+      function endTouches(event) {
+        event.preventDefault();
+        for (const touch of event.changedTouches) {
+          const name = touches.get(touch.identifier);
+          if (name) {
+            touches.delete(touch.identifier);
+            if (![...touches.values()].includes(name)) setButton(name, false);
+          }
+          if (analogTouch && touch.identifier === analogTouch.identifier) {
+            const zoneId = analogTouch.zoneId;
+            analogTouch = null;
+            releaseStick(zoneId);
+          }
+        }
+      }
+      document.addEventListener("touchend", endTouches, { passive: false });
+      document.addEventListener("touchcancel", endTouches, { passive: false });
+
+      document.querySelectorAll("[data-button]").forEach((button) => {
+        button.addEventListener("mousedown", (event) => { event.preventDefault(); setButton(button.dataset.button, true); });
+        button.addEventListener("mouseup", () => setButton(button.dataset.button, false));
+        button.addEventListener("mouseleave", () => setButton(button.dataset.button, false));
+      });
+
+      socket.on("connect", () => {
+        status.className = "status";
+        statusText.textContent = "Mendaftar...";
+        socket.emit("identify");
+      });
+      socket.on("player_assigned", ({ player }) => {
+        status.className = "status connected";
+        statusText.textContent = `Connected as Player ${player}`;
+      });
+      socket.on("controller_error", ({ message }) => {
+        status.className = "status error";
+        statusText.textContent = message || "Gamepad tidak tersedia";
+      });
+      socket.on("disconnect", () => {
+        buttons.clear();
+        touches.clear();
+        analogTouch = null;
+        releaseStick("left-stick");
+        releaseStick("right-stick");
+        document.querySelectorAll("[data-button]").forEach((element) => element.classList.remove("active"));
+        status.className = "status error";
+        statusText.textContent = "Terputus · menyambungkan ulang";
+      });
+    })();
+  </script>
+</body>
+</html>
